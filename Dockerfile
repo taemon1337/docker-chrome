@@ -1,34 +1,54 @@
-FROM ubuntu:14.04.3
+FROM ubuntu:17.04
 
-MAINTAINER Chris Daish <chrisdaish@gmail.com>
+MAINTAINER taemon1337
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV CHROME_PACKAGE=google-chrome-stable_current_amd64.deb \
+    DEBIAN_FRONTEND=noninteractive
 
-COPY AptSources /etc/apt/sources.list.d/
+COPY packages /usr/local/src/
 
-RUN useradd -m google-chrome; \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A040830F7FAC5991 \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates \
-                                                  gconf-service \
-                                                  hicolor-icon-theme \
-                                                  libappindicator1 \
-                                                  libasound2 \
-                                                  libcurl3 \
-                                                  libexif-dev \
-                                                  libgconf-2-4 \
-                                                  libgl1-mesa-dri \
-                                                  libgl1-mesa-glx \
-                                                  libnspr4 \
-                                                  libnss3 \
-                                                  libpango1.0-0 \
-                                                  libv4l-0 \
-                                                  libxss1 \
-                                                  libxtst6 \
-                                                  xdg-utils \
-                                                  google-chrome-stable=50.0.2661.94-1 \
-    && rm -rf /var/lib/apt/lists/*
+RUN useradd -m google-chrome && \
+    apt-get update && \
+    apt-get install -y \
+      --no-install-recommends \
+      ca-certificates \
+      gconf-service \
+      hicolor-icon-theme \
+      libappindicator1 \
+      libasound2 \
+      libcurl3 \
+      libexif-dev \
+      libgconf-2-4 \
+      libgl1-mesa-dri \
+      libgl1-mesa-glx \
+      libnspr4 \
+      libnss3 \
+      libpango1.0-0 \
+      libv4l-0 \
+      libxss1 \
+      libxtst6 \
+      libgtk-3-0 \
+      lsb-release \
+      xdg-utils \
+      fonts-liberation \
+      wget && \
+    dpkg -i /usr/local/src/$CHROME_PACKAGE && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /usr/local/src/packages
 
 COPY start-google-chrome.sh /usr/local/bin/
 
 ENTRYPOINT ["/usr/local/bin/start-google-chrome.sh"]
+
+#docker run  -v $HOME/Downloads:/home/google-chrome/Downloads:rw \
+#  -v /tmp/.X11-unix:/tmp/.X11-unix \
+#  -v /dev/snd:/dev/snd \
+#  -v /dev/shm:/dev/shm \
+#  --privileged \
+#  -e uid=$(id -u) \
+#  -e gid=$(id -g) \
+#  -e DISPLAY=unix$DISPLAY \
+#  --rm \
+#  --name google-chrome \
+#  chrisdaish/google-chrome
+

@@ -1,13 +1,15 @@
-FROM ubuntu:latest
+FROM alpine:latest
 
 MAINTAINER taemon1337
 
 ENV CHROME_PACKAGE=google-chrome-stable_current_amd64.deb
 ENV CHROME_DOWNLOAD_URL=https://dl.google.com/linux/direct/$CHROME_PACKAGE
-ENV CHROME_VERSION=64.0.3282.186
+ENV CHROME_VERSION=62.0.3203
 ENV DEBIAN_FRONTEND=noninteractive
 
-COPY packages /usr/local/src/
+RUN apt add --update --no-cache \
+    ca-certificates \
+    
 
 RUN useradd -m google-chrome && \
     apt-get update && \

@@ -2,9 +2,10 @@ FROM ubuntu:latest
 
 MAINTAINER taemon1337
 
+ARG CHROME_VERSION
 ENV CHROME_PACKAGE=google-chrome-stable_current_amd64.deb
 ENV CHROME_DOWNLOAD_URL=https://dl.google.com/linux/direct/$CHROME_PACKAGE
-ENV CHROME_VERSION=64.0.3282.186
+#ENV CHROME_VERSION=64.0.3282.186
 ENV DEBIAN_FRONTEND=noninteractive
 
 COPY packages /usr/local/src/

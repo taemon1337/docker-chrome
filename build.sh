@@ -15,5 +15,6 @@ fi
 read -p "Build Chrome Version: $version [y/n] " ans
 if [ "$ans" == "y" ]; then
   docker build --build-arg CHROME_VERSION=$version -t chrome:$version .
+  docker tag chrome:$version chrome:latest
 fi
 

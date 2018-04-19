@@ -17,7 +17,7 @@ RUN useradd -m google-chrome && \
       ca-certificates \
       gconf-service \
       hicolor-icon-theme \
-      libappindicator1 \
+      libappindicator3-1 \
       libasound2 \
       libcurl3 \
       libexif-dev \

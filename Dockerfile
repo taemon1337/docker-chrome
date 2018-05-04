@@ -35,8 +35,13 @@ RUN useradd -m google-chrome && \
       xdg-utils \
       fonts-liberation \
       wget && \
+      policykit-1 && \
+      xbase-clients && \
+      python && \
+      python-psutil && \
     wget $CHROME_DOWNLOAD_URL -O /usr/local/src/$CHROME_PACKAGE && \
     dpkg -i /usr/local/src/$CHROME_PACKAGE && \
+    dpkg -i /usr/local/src/chrome-remote-desktop_current_amd64.deb && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /usr/local/src/packages
 

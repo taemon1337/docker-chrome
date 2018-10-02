@@ -26,3 +26,4 @@ Simply allow the docker user to communicate with your X session
 ```
 xhost +local:docker
 ```
+

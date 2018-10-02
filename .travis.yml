@@ -1,0 +1,18 @@
+sudo: required
+
+services:
+  - docker
+
+language: generic
+
+branches:
+  only:
+    - master
+
+jobs:
+  include:
+    - state: build
+      script: bash ./build.sh
+      on:
+        branch: master
+

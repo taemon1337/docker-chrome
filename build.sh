@@ -24,14 +24,14 @@ fi
 
 
 if [ ! -z "$DOCKER_PUSH" ]; then
-  docker tag chrome:$version taemon1337/chrome:$target
+  docker tag chrome:$version taemon1337/chrome:$version
   docker tag chrome:$version taemon1337/chrome:latest
 
   if [ ! -z "$DOCKER_PASSWORD" ]; then
     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   fi
 
-  docker push taemon1337/chrome:$target
+  docker push taemon1337/chrome:$version
   docker push taemon1337/chrome:latest
 fi
 

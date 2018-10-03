@@ -196,6 +196,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 _main "${args[@]}"
+exit 0
 
 # docker run --privileged \
 #  -v $HOME/Downloads:/home/google-chrome/Downloads:rw \

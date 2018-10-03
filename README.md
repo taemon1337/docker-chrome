@@ -8,9 +8,28 @@ rendered by the local X Server.
 ## Launch Command
 
 ```
-  ./chrome            # start docker chrome with persistance to ~/.config/google-chrome
-  ./chrome --clean    # start docker chrome with no persistance other than Downloads
-  ./chrome --net      # start docker chrome with host networking
+Usage: ./chrome <action> <options>
+Description: Run Google Chrome in a container, store chrome data in /home/tim/.config/google-chrome
+Actions:
+  start                 Start a google chrome container (this is the default if no other action is provided.)
+  build                 Build the latest version of google chrome image.
+  push                  Push the latest version of google chrome image.
+Options:
+  --clean               Use clean image with no mounted storage except /home/tim/Downloads
+  --net                 Use host networking
+  --data  <dir>         Override default data directory to given <dir>, default is /home/tim/.config/google-chrome
+  --download <dir>      Override default download directory to given <dir>, default is /home/tim/.config/google-chrome
+  --no-sound            Do not mount sound from '/dev/snd'
+  --no-video            Do not mount video from '/dev/video0'
+  --no-mount-shm        Do not mount shm from '/dev/shm' (may break things)
+  --no-remove           Do not immediately remove container upon exit
+  --no-privileged       Do not run with --privileged flag (may break)
+  --uid                 Override default uid '1000'
+  --gid                 Override default gid '1000'
+  --x11 <path>          Override path to x11 socket (default is /tmp/.X11-unix)
+  --image <image>       Override chrome docker image to start, default is taemon1337/chrome
+  --version <version>   Specify Google Chrome image tag version to run, default is latest
+  --cmd <command>       Override chrome docker command, default will start chrome
 ```
 
 ## FAQ

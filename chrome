@@ -1,39 +1,211 @@
 #!/bin/bash
 
-if [ "$1" == "--clean" ]; then
- docker run --privileged \
-  -v $HOME/Downloads:/home/google-chrome/Downloads:rw \
-  -v /tmp/.X11-unix:/tmp/.X11-unix \
-  -v /dev/snd:/dev/snd \
-  -v /dev/shm:/dev/shm \
-  -e uid=$(id -u) \
-  -e gid=$(id -g) \
-  -e DISPLAY=unix$DISPLAY \
-  --rm \
-  chrome:latest
-elif [ "$1" == "--net" ]; then
- docker run --privileged \
-  --net=host \
-  -v $HOME/Downloads:/home/google-chrome/Downloads:rw \
-  -v /tmp/.X11-unix:/tmp/.X11-unix \
-  -v /dev/snd:/dev/snd \
-  -v /dev/shm:/dev/shm \
-  -e uid=$(id -u) \
-  -e gid=$(id -g) \
-  -e DISPLAY=unix$DISPLAY \
-  --rm \
-  chrome:latest
-else
- docker run --privileged \
-  -v $HOME/Downloads:/home/google-chrome/Downloads:rw \
-  -v $HOME/.config/google-chrome:/home/google-chrome/.config/google-chrome:rw \
-  -v /tmp/.X11-unix:/tmp/.X11-unix \
-  -v /dev/snd:/dev/snd \
-  -v /dev/shm:/dev/shm \
-  -v /dev/video0:/dev/video0 \
-  -e uid=$(id -u) \
-  -e gid=$(id -g) \
-  -e DISPLAY=unix$DISPLAY \
-  --rm \
-  chrome:latest
-fi
+_help() {
+  echo "Usage: $0 <action> <options>"
+  echo "Description: Run Google Chrome in a container, store chrome data in $HOME/.config/google-chrome"
+  echo "Actions:"
+  echo "  start                 Start a google chrome container (this is the default if no other action is provided.)"
+  echo "  build                 Build the latest version of google chrome image."
+  echo "  push                  Push the latest version of google chrome image."
+  echo "Options:"
+  echo "  --clean               Use clean image with no mounted storage except $HOME/Downloads"
+  echo "  --net                 Use host networking"
+  echo "  --data  <dir>         Override default data directory to given <dir>, default is $HOME/.config/google-chrome"
+  echo "  --download <dir>      Override default download directory to given <dir>, default is $HOME/.config/google-chrome"
+  echo "  --no-sound            Do not mount sound from '/dev/snd'"
+  echo "  --no-video            Do not mount video from '/dev/video0'"
+  echo "  --no-mount-shm        Do not mount shm from '/dev/shm' (may break things)"
+  echo "  --no-remove           Do not immediately remove container upon exit"
+  echo "  --no-privileged       Do not run with --privileged flag (may break)"
+  echo "  --uid                 Override default uid '$(id -u)'"
+  echo "  --gid                 Override default gid '$(id -g)'"
+  echo "  --x11 <path>          Override path to x11 socket (default is /tmp/.X11-unix)"
+  echo "  --image <image>       Override chrome docker image to start, default is taemon1337/chrome"
+  echo "  --version <version>   Specify Google Chrome image tag version to run, default is latest"
+  echo "  --cmd <command>       Override chrome docker command, default will start chrome"
+  echo "  --push                If set and using build command, push image just after build."
+  echo ""
+}
+
+find_latest_chrome_version() {
+  curl -ks https://www.whatismybrowser.com/guides/the-latest-version/chrome | grep -A1 'Chrome on <strong>Linux</strong>' | grep "<td>[0-9\.]*</td>" | sed -e 's/<td>//' | sed -e 's/<\/td>//' | tr -d '[:space:]'
+}
+
+_build() {
+  if [ "$version" != "$lastversion" ]; then
+    echo "Building $image:$version"
+    echo "$version" >> VERSION  # append latest version to VERSION logfile
+    docker build --build-arg CHROME_VERSION=$version -t $image:$version .
+    docker tag $image:$version $image:latest
+  else
+    echo "Latest version ($version) already built."
+  fi
+
+  if [ "$autopush" == "1" ]; then _push; fi
+}
+
+_push() {
+  if [ ! -z "$DOCKER_PASSWORD" ]; then
+    echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  fi
+
+  echo "docker push $image:$version"
+  docker push $image:$version
+  docker push $image:latest
+}
+
+_main() {
+  case "$1" in
+    build)
+      shift
+      _build
+      ;;
+    push)
+      shift
+      _push
+      ;;
+    --help|help*)
+      _help
+      echo "Invalid Action: $1, exiting."
+      exit 1
+      ;;
+    *)
+      shift
+      cmd="docker run"
+      cmd="$cmd -v $x11:/tmp/.X11-unix"
+      if [ -z "$download" ]; then cmd="$cmd -v $download:/home/google-chrome/Downloads:rw"; fi
+      if [ -z "$clean" ]; then cmd="$cmd -v $data:/home/google-chrome/.config/google-chrome:rw"; fi
+      if [ -z "$net" ]; then cmd="$cmd --net host"; fi
+      if [ -z "$nopriv" ]; then cmd="$cmd --privileged"; fi
+      if [ -z "$nomountsnd" ]; then cmd="$cmd -v /dev/snd:/dev/snd"; fi
+      if [ -z "$novideo" ]; then cmd="$cmd -v /dev/video0:/dev/video0"; fi
+      if [ -z "$nomountshm" ]; then cmd="$cmd -v /dev/shm:/dev/shm"; fi
+      if [ -z "$noremove" ]; then cmd="$cmd --rm"; fi
+      cmd="$cmd -e uid=$uid -e gid=$gid -e DISPLAY=unix$DISPLAY"
+      cmd="$cmd $image"
+      echo "[RUN] $cmd"
+      $cmd
+      ;;
+  esac
+}
+
+# Default args
+image="taemon1337/chrome"
+dockercmd=""
+clean=""
+net=""
+data="$HOME/.config/google-chrome"
+downloads="$HOME/Downloads"
+x11="/tmp/.X11-unix"
+uid=$(id -u)
+gid=$(id -g)
+nomountsnd=""
+novideo=""
+nomountshm=""
+noremove=""
+nopriv=""
+version="$(find_latest_chrome_version)"
+lastversion="$(cat VERSION | tail -n 1)"
+autopush=""
+
+args=()
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    --image)
+      image="$2"
+      shift
+      shift
+      ;;
+    --version)
+      version="$2"
+      shift
+      shift
+      ;;
+    --command)
+      dockercmd="$2"
+      shift
+      shift
+      ;;
+    --push)
+      autopush="1"
+      shift
+      ;;
+    --clean)
+      clean="1"
+      shift
+      ;;
+    --net)
+      net="1"
+      shift
+      ;;
+    --data)
+      data="$2"
+      shift
+      shift
+      ;;
+    --download)
+      downloads="$2"
+      shift
+      shift
+      ;;
+    --uid)
+      uid="$2"
+      shift
+      shift
+      ;;
+    --gid)
+      gid="$2"
+      shift
+      shift
+      ;;
+    --no-sound)
+      nomountsnd="1"
+      shift
+      ;;
+    --no-video)
+      novideo="1"
+      shift
+      ;;
+    --no-mount-shm)
+      nomountshm="1"
+      shift
+      ;;
+    --no-remove)
+      noremove="1"
+      shift
+      ;;
+    --no-priv)
+      nopriv="1"
+      shift
+      ;;
+    --x11)
+      x11="$2"
+      shift
+      shift
+      ;;
+    --help)
+      _help
+      exit 1
+      ;;
+    *)
+      args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+_main "${args[@]}"
+
+# docker run --privileged \
+#  -v $HOME/Downloads:/home/google-chrome/Downloads:rw \
+#  -v $HOME/.config/google-chrome:/home/google-chrome/.config/google-chrome:rw \
+#  -v /tmp/.X11-unix:/tmp/.X11-unix \
+#  -v /dev/snd:/dev/snd \
+#  -v /dev/shm:/dev/shm \
+#  -v /dev/video0:/dev/video0 \
+#  -e uid=$(id -u) \
+#  -e gid=$(id -g) \
+#  -e DISPLAY=unix$DISPLAY \
+#  --rm \
+#  chrome:latest

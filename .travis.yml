@@ -12,7 +12,7 @@ branches:
 jobs:
   include:
     - state: build
-      script: bash ./build.sh
+      script: bash ./chrome build --push
       on:
         branch: master
 

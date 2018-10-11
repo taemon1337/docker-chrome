@@ -73,7 +73,7 @@ _main() {
       shift
       cmd="docker run"
       cmd="$cmd -v $x11:/tmp/.X11-unix"
-      if [ -z "$download" ]; then cmd="$cmd -v $download:/home/google-chrome/Downloads:rw"; fi
+      if [ -r "$downloads" ]; then cmd="$cmd -v $downloads:/home/google-chrome/Downloads:rw"; fi
       if [ -z "$clean" ]; then cmd="$cmd -v $data:/home/google-chrome/.config/google-chrome:rw"; fi
       if [ -z "$net" ]; then cmd="$cmd --net host"; fi
       if [ -z "$nopriv" ]; then cmd="$cmd --privileged"; fi

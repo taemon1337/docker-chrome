@@ -17,6 +17,7 @@ _help() {
   echo "  --no-mount-shm        Do not mount shm from '/dev/shm' (may break things)"
   echo "  --no-remove           Do not immediately remove container upon exit"
   echo "  --no-privileged       Do not run with --privileged flag (may break)"
+  echo "  --no-pull-latest      Do not pull latest before running"
   echo "  --uid                 Override default uid '$(id -u)'"
   echo "  --gid                 Override default gid '$(id -g)'"
   echo "  --x11 <path>          Override path to x11 socket (default is /tmp/.X11-unix)"
@@ -81,6 +82,7 @@ _main() {
       if [ -z "$novideo" ]; then cmd="$cmd -v /dev/video0:/dev/video0"; fi
       if [ -z "$nomountshm" ]; then cmd="$cmd -v /dev/shm:/dev/shm"; fi
       if [ -z "$noremove" ]; then cmd="$cmd --rm"; fi
+      if [ -z "$nopull" ]; then docker pull $image:latest; fi
       cmd="$cmd -e uid=$uid -e gid=$gid -e DISPLAY=unix$DISPLAY"
       cmd="$cmd $image"
       echo "[RUN] $cmd"
@@ -104,6 +106,7 @@ novideo=""
 nomountshm=""
 noremove=""
 nopriv=""
+nopull=""
 version="$(find_latest_chrome_version)"
 lastversion="$(cat VERSION | tail -n 1)"
 autopush=""
@@ -177,6 +180,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-priv)
       nopriv="1"
+      shift
+      ;;
+    --no-pull-latest)
+      nopull="1"
       shift
       ;;
     --x11)

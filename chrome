@@ -25,6 +25,7 @@ _help() {
   echo "  --version <version>   Specify Google Chrome image tag version to run, default is latest"
   echo "  --cmd <command>       Override chrome docker command, default will start chrome"
   echo "  --push                If set and using build command, push image just after build."
+  echo "  --version             Show latest chrome version"
   echo ""
 }
 
@@ -61,9 +62,18 @@ _main() {
       shift
       _build
       ;;
+    pull)
+      shift
+      docker pull $image:latest 2>&1 &
+      ;;
     push)
       shift
       _push
+      ;;
+    --version|version)
+      shift
+      echo $version
+      exit 0
       ;;
     --help|help*)
       _help
@@ -76,13 +86,13 @@ _main() {
       cmd="$cmd -v $x11:/tmp/.X11-unix"
       if [ -r "$downloads" ]; then cmd="$cmd -v $downloads:/home/google-chrome/Downloads:rw"; fi
       if [ -z "$clean" ]; then cmd="$cmd -v $data:/home/google-chrome/.config/google-chrome:rw"; fi
-      if [ -z "$net" ]; then cmd="$cmd --net host"; fi
+      if [ ! -z "$net" ]; then cmd="$cmd --net $net"; fi
       if [ -z "$nopriv" ]; then cmd="$cmd --privileged"; fi
       if [ -z "$nomountsnd" ]; then cmd="$cmd -v /dev/snd:/dev/snd"; fi
       if [ -z "$novideo" ]; then cmd="$cmd -v /dev/video0:/dev/video0"; fi
       if [ -z "$nomountshm" ]; then cmd="$cmd -v /dev/shm:/dev/shm"; fi
       if [ -z "$noremove" ]; then cmd="$cmd --rm"; fi
-      if [ -z "$nopull" ]; then docker pull $image:latest; fi
+      if [ -z "$nopull" ]; then _main pull; fi
       cmd="$cmd -e uid=$uid -e gid=$gid -e DISPLAY=unix$DISPLAY"
       cmd="$cmd $image"
       echo "[RUN] $cmd"
@@ -139,7 +149,12 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --net)
-      net="1"
+      net="host"
+      shift
+      ;;
+    --network)
+      net="$2"
+      shift
       shift
       ;;
     --data)
@@ -190,6 +205,11 @@ while [[ $# -gt 0 ]]; do
       x11="$2"
       shift
       shift
+      ;;
+    --version)
+      shift
+      echo $version
+      exit 0
       ;;
     --help)
       _help

@@ -1,0 +1,9 @@
+name: $git.name
+version: $file.VERSION
+devices:
+- sound
+- video
+- shm
+volumes:
+- $HOME/.config/google-chrome
+
